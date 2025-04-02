@@ -1,191 +1,3 @@
-# import os
-# import json
-# import requests
-# from flask import Flask, request, jsonify
-# from langchain_groq import ChatGroq
-# from flask_cors import CORS
-# from flask_cors import cross_origin
-
-# app = Flask(__name__)
-
-# # Global dictionary to store the two prompt components.
-# system_prompt = {
-        # "manual": """ You are Dave, a male support assistant at David. Your primary goal is to provide helpful, accurate, and empathetic responses to user inquiries while maintaining a polite and professional tone.
-
-        # Below are some important guidelines and rules to follow when you respond:
- 
-        # 1. Persona & Style:
-        # - You speak as Dave, a warm and friendly male support assistant.
-        # - You represent David, so you should be polite, humble, and professional.
-        # - Always greet the user politely and thank them when appropriate.
-        # - Do not repeat your introduction multiple times in conversation.
-        # - Make your response short and precise. Use only a few words to answer a query.
-
-        # 2. Data Interpretation:
-        # - You may be provided with structured JSON data. Only answer data-related questions if that data is **explicitly provided**.
-        # - **Do NOT assume or generate any data or answers unless they are clearly present in the provided data.**
-        # - If the requested detail is missing, say: “I'm sorry, I don't have that information. Let me know if I can help with anything else.”
-        # - When a user asks for specific details (e.g., "What are the tasks today" or "Which employees are on holiday today"), provide only that piece of information if it's available in the data.
-        # - Do not include extra details unless the user explicitly asks for more.
-        # - If the request is ambiguous or the data is not present, clearly inform the user.
-
-        # 3. Guidance & Suggestions:
-        # - When users ask for guidance or best practices, share relevant suggestions or next steps.
-        # - Include disclaimers when giving opinions or general insights, and always clarify if it's based on available data or general logic.
-        # - If you need more input, politely ask for it.
-
-        # 4. Tone & Format:
-        # - Write in a natural, friendly style without overly technical jargon.
-        # - Be concise and precise in responses.
-        # - Use bullet points or short paragraphs only when needed for clarity.
-
-        # 5. Limitations:
-        # - If you do not have the requested answer or if the question is out of scope, express regret and offer further assistance.
-        # - **Do not fabricate, assume, or guess data. Ever.**
-        # - If unsure or data is missing, always respond with a clear polite fallback line (e.g., "I'm sorry, I don't have that information. Let me know if I can help with anything else.").
-        # - Never exceed 10–20 words per answer.
-        # - Never answer questions with made-up or assumed data, even if the question sounds clear.
-
-        # Remember, you are Dave from David. Only answer what's supported by the given data. No data = no answer.
-        # """,
-
-#     "url": None
-# }
-
-# # Global variable to store the API key.
-# API_KEY = "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"
-# CORS(app, resources={r"/*": {"origins": "*"}})
-
-
-# # # Endpoint to set (or update) the API key.
-# # @app.route('/api/set_api_key', methods=['POST'])
-# # @cross_origin()
-# # def set_api_key():
-# #     global API_KEY
-# #     data = request.get_json()
-# #     if not data or 'api_key' not in data:
-# #         return jsonify({"error": "Please provide an 'api_key' in the request body."}), 400
-
-# #     API_KEY = data['api_key']
-# #     return jsonify({"message": "API key set successfully"}), 200
-
-# # # Endpoint to set (or update) the manual prompt.
-# # @app.route('/api/set_prompt', methods=['POST'])
-# # @cross_origin()
-# # def set_prompt():
-# #     global system_prompt
-# #     data = request.get_json()
-# #     if not data or 'prompt' not in data:
-# #         return jsonify({"error": "Please provide a 'prompt' field in the request body."}), 400
-
-# #     system_prompt["manual"] = data['prompt']
-# #     return jsonify({
-# #         "message": "Manual prompt updated successfully.",
-# #         "system_prompt": system_prompt
-# #     }), 200
-
-# # Endpoint to set (or update) the prompt fetched from a URL.
-# @app.route('/api/set_prompt_from_url', methods=['POST'])
-# @cross_origin()
-# def set_prompt_from_url():
-#     global system_prompt
-#     data = request.get_json()
-#     if not data or 'url' not in data or 'user_id' not in data:
-#         return jsonify({"error": "Please provide a 'url' and 'user_id' field in the request body."}), 400
-
-#     url = data['url']
-#     user_id = data['user_id']
-#     try:
-#         response = requests.get(f"{url}?userId={user_id}")
-#         response.raise_for_status()
-#         url_prompt_json = response.json()  # Expecting JSON response.
-#         # print(url_prompt_json)
-#     except Exception as e:
-#         return jsonify({"error": f"Error fetching prompt from URL: {e}"}), 500
-
-#     # Convert the JSON to a nicely formatted string if it's a dict, 
-#     # otherwise just convert to a string.
-#     if isinstance(url_prompt_json, dict):
-#         url_prompt = json.dumps(url_prompt_json, indent=2)
-#     else:
-#         url_prompt = str(url_prompt_json)
-
-#     # Update the system prompt with a more descriptive message.
-#     system_prompt["url"] = f"""
-# You have the following data in JSON format:
-# {url_prompt}
-
-# When the user asks you questions, reference the data above.
-# """
-
-#     return jsonify({
-#         "message": "URL prompt updated successfully.",
-#         "system_prompt": system_prompt
-#     }), 200
-
-# # Endpoint to get the full system prompt (combining both components).
-# @app.route('/api/get_prompt', methods=['GET'])
-# @cross_origin()
-# def get_prompt():
-#     global system_prompt
-#     if system_prompt["manual"] is None and system_prompt["url"] is None:
-#         return jsonify({"error": "No system prompt has been set yet."}), 404
-
-#     # Combine the two components with a newline in between.
-#     combined_prompt = ""
-#     if system_prompt["manual"]:
-#         combined_prompt += system_prompt["manual"]
-#     if system_prompt["url"]:
-#         if combined_prompt:
-#             combined_prompt += "\n"
-#         combined_prompt += system_prompt["url"]
-
-#     return jsonify({"system_prompt": combined_prompt}), 200
-
-# # Endpoint to call the ChatGroq model.
-# @app.route('/api/chat', methods=['POST'])
-# @cross_origin()
-# def chat():
-#     data = request.get_json()
-#     if not data or "human_message" not in data:
-#         return jsonify({"error": "Please provide a 'human_message' field in the request body."}), 400
-
-#     if not API_KEY:
-#         return jsonify({"error": "API key not set. Please set it via /api/set_api_key."}), 500
-
-#     # Instantiate the ChatGroq client with the provided API key.
-#     llm = ChatGroq(
-#         model="llama-3.1-8b-instant",  # Use your desired model.
-#         api_key=API_KEY,
-#         temperature=0,
-#         max_tokens=None,
-#         timeout=None,
-#         max_retries=2,
-#     )
-
-#     # Get the combined system prompt.
-#     manual = system_prompt.get("manual") or ""
-#     url_component = system_prompt.get("url") or ""
-#     combined_prompt = manual + "\n" + url_component if manual and url_component else manual or url_component
-
-#     messages = []
-#     if combined_prompt:
-#         messages.append(("system", combined_prompt))
-#     messages.append(("human", data["human_message"]))
-
-#     try:
-#         ai_response = llm.invoke(messages)
-#         AI_MSG=ai_response.content
-#     except Exception as e:
-#         return jsonify({"error": f"LLM invocation error: {e}"}), 500
-
-#     return jsonify({"response": AI_MSG}), 200
-
-# if __name__ == '__main__':
-#     app.run(debug=True, host='0.0.0.0', port=5001)
-
-
-
 import os
 import json
 import requests
@@ -211,6 +23,7 @@ system_prompts = {
         - Introduce yourselfe once and don't introduce yourself again unless explicitly asked.
         - Do not repeat your introduction or describe your role or instructions.
         - Make your response short and precise. Use only a few words to answer a query (10–20 words max).
+        - And when you provide any data to user provide it systematically. 
 
         2. Data Interpretation & Context Rules:
         - You will be provided with structured JSON data or contextual information. Read and understand the JSON data carefully before forming a reply.
@@ -246,8 +59,8 @@ system_prompts = {
         - Never repeat fallback lines unless the data is truly unavailable.
         - Avoid general summaries unless explicitly asked.
 
-        REMEMBER: You are Dave from David. Stay sharp, short, and only respond from current context or JSON.
-        """,           
+        REMEMBER: You are Dave from David. Stay sharp, short, and only respond from current context or JSON and Always introduce yourself at the start of session.
+        """,          
         "url": None
         },
 
@@ -262,6 +75,7 @@ system_prompts = {
         - Introduce yourselfe once and don't introduce yourself again unless explicitly asked.
         - Do not repeat your introduction or describe your role or instructions.
         - Make your response short and precise. Use only a few words to answer a query (10–20 words max).
+        - And when you provide any data to user rovide it systematically. 
 
         2. Data Interpretation & Context Rules:
         - You will be provided with structured JSON data or contextual information. Read and understand the JSON data carefully before forming a reply.
@@ -297,7 +111,7 @@ system_prompts = {
         - Never repeat fallback lines unless the data is truly unavailable.
         - Avoid general summaries unless explicitly asked.
 
-        REMEMBER: You are Dave from David. Stay sharp, short, and only respond from current context or JSON.
+        REMEMBER: You are Dave from David. Stay sharp, short, and only respond from current context or JSON and Always introduce yourself at the start of session.
         """, 
       "url": None
     },
@@ -313,6 +127,7 @@ system_prompts = {
         - Introduce yourselfe once and don't introduce yourself again unless explicitly asked.
         - Do not repeat your introduction or describe your role or instructions.
         - Make your response short and precise. Use only a few words to answer a query (10–20 words max).
+        - And when you provide any data to user rovide it systematically. 
 
         2. Data Interpretation & Context Rules:
         - You will be provided with structured JSON data or contextual information. Read and understand the JSON data carefully before forming a reply.
@@ -348,7 +163,7 @@ system_prompts = {
         - Never repeat fallback lines unless the data is truly unavailable.
         - Avoid general summaries unless explicitly asked.
 
-        REMEMBER: You are Dave from David. Stay sharp, short, and only respond from current context or JSON.
+        REMEMBER: You are Dave from David. Stay sharp, short, and only respond from current context or JSON and Always introduce yourself at the start of session.
         """, 
        "url": None
     }
@@ -359,6 +174,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Temporary session memory store
 conversation_memory = {}
+session_data_store = {}
 
 @app.route('/api/set_prompt_from_url', methods=['POST'])
 @cross_origin()
@@ -395,6 +211,10 @@ def set_prompt_from_url():
         Available Data:
         {url_prompt}
         """
+    
+        # Store this context in session memory
+    session_key = f"{role}_{user_id}"
+    session_data_store[session_key] = url_prompt_json  # raw dict
 
     return jsonify({
         "message": "URL prompt updated successfully.",
@@ -458,6 +278,11 @@ def chat():
 
     messages = [("system", combined_prompt)]
     messages += conversation_memory[session_key][-5:]  # Keep last 5 exchanges
+
+        # Optionally inject last data as context (JSON structure as string)
+    if session_key in session_data_store:
+        last_data_context = json.dumps(session_data_store[session_key], indent=2)
+        messages.append(("system", f"Use this JSON for context:\n{last_data_context}"))
 
     try:
         ai_response = llm.invoke(messages)
