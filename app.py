@@ -6,10 +6,11 @@ from langchain_groq import ChatGroq
 from flask_cors import CORS
 from flask_cors import cross_origin
 from urllib.parse import urljoin
+from dotenv import load_dotenv
 
 
 app = Flask(__name__)
-
+load_dotenv()
 # Role-based system prompts
 system_prompts = {
     "1": {
@@ -169,7 +170,7 @@ system_prompts = {
     }
 }
 
-API_KEY = "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"
+API_KEY = os.getenv("GROQ_API_KEY")
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Temporary session memory store
